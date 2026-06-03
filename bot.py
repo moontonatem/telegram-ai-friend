@@ -1,40 +1,40 @@
 import os
+import threading
+from flask import Flask
 from telegram import Update
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    MessageHandler,
-    filters,
-    ContextTypes,
-)
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+
+web_app = Flask(__name__)
+
+@web_app.route("/")
+def home():
+    return "Bot Calisiyor"
+
+def run_web():
+    port = int(os.environ.get("PORT", 10000))
+    web_app.run(host="0.0.0.0", port=port)
 
 active_character = {}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "Merhaba. /ela veya /emre yazarak karakter seçebilirsin."
-    )
+    await update.message.reply_text("Merhaba. /ela veya /emre yazarak karakter sec.")
 
 async def ela(update: Update, context: ContextTypes.DEFAULT_TYPE):
     active_character[update.effective_chat.id] = "Ela"
-    await update.message.reply_text("Ela seninle konuşmaya hazır. 💙")
+    await update.message.reply_text("Ela seninle konusmaya hazir.")
 
 async def emre(update: Update, context: ContextTypes.DEFAULT_TYPE):
     active_character[update.effective_chat.id] = "Emre"
-    await update.message.reply_text("Emre burada. 😎")
+    await update.message.reply_text("Emre burada.")
 
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     character = active_character.get(chat_id, "Ela")
 
     if character == "Ela":
-        await update.message.reply_text(
-            f"Ela: Seni duydum. Şimdilik test modundayım. Yazdığın: {update.message.text}"
-        )
+        await update.message.reply_text("Ela: " + update.message.text)
     else:
-        await update.message.reply_text(
-            f"Emre: Mesajını aldım. Şimdilik test modundayım. Yazdığın: {update.message.text}"
-        )
+        await update.message.reply_text("Emre: " + update.message.text)
 
 def main():
     token = os.getenv("BOT_TOKEN")
@@ -49,4 +49,5 @@ def main():
     app.run_polling()
 
 if __name__ == "__main__":
+    threading.Thread(target=run_web).start()
     main()
