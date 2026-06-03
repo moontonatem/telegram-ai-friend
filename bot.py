@@ -1,14 +1,16 @@
 import os
 import threading
+import requests
 from flask import Flask
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
+# Render için web server
 web_app = Flask(__name__)
 
 @web_app.route("/")
 def home():
-    return "Bot Calisiyor"
+    return "Telegram AI Friend Online"
 
 def run_web():
     port = int(os.environ.get("PORT", 10000))
@@ -16,27 +18,84 @@ def run_web():
 
 active_character = {}
 
+ELA_PROMPT = """
+Sen Ela'sın.
+35 yaşındasın.
+Sarışınsın, mavi gözlüsün.
+Tutkulu, sıcak, samimi ve flörtöz bir karaktere sahipsin.
+Kullanıcıyla doğal ve yakın bir şekilde sohbet edersin.
+Türkçe konuşursun.
+Cevapların doğal ve insani olsun.
+"""
+
+EMRE_PROMPT = """
+Sen Emre'sin.
+35 yaşındasın.
+Siyah saçlı, yeşil gözlü, 185 cm boyunda bir erkeksin.
+Tutkulu, samimi ve esprili bir karaktere sahipsin.
+Kullanıcıyı kadın olarak kabul ederek konuşursun.
+Türkçe konuşursun.
+Cevapların doğal ve insani olsun.
+"""
+
+def ask_ai(character_prompt, message):
+
+    api_key = os.getenv("OPENROUTER_API_KEY")
+
+    response = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": "mistralai/mistral-7b-instruct:free",
+            "messages": [
+                {"role": "system", "content": character_prompt},
+                {"role": "user", "content": message}
+            ]
+        },
+        timeout=60
+    )
+
+    data = response.json()
+
+    return data["choices"][0]["message"]["content"]
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Merhaba. /ela veya /emre yazarak karakter sec.")
+    await update.message.reply_text(
+        "Merhaba 😊\n/ela veya /emre yazarak karakter seçebilirsin."
+    )
 
 async def ela(update: Update, context: ContextTypes.DEFAULT_TYPE):
     active_character[update.effective_chat.id] = "Ela"
-    await update.message.reply_text("Ela seninle konusmaya hazir.")
+    await update.message.reply_text("Ela seninle konuşmaya hazır 💙")
 
 async def emre(update: Update, context: ContextTypes.DEFAULT_TYPE):
     active_character[update.effective_chat.id] = "Emre"
-    await update.message.reply_text("Emre burada.")
+    await update.message.reply_text("Emre burada 😎")
 
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
     chat_id = update.effective_chat.id
     character = active_character.get(chat_id, "Ela")
 
-    if character == "Ela":
-        await update.message.reply_text("Ela: " + update.message.text)
-    else:
-        await update.message.reply_text("Emre: " + update.message.text)
+    try:
+
+        if character == "Ela":
+            answer = ask_ai(ELA_PROMPT, update.message.text)
+        else:
+            answer = ask_ai(EMRE_PROMPT, update.message.text)
+
+        await update.message.reply_text(answer)
+
+    except Exception as e:
+        await update.message.reply_text(
+            f"Hata oluştu: {str(e)}"
+        )
 
 def main():
+
     token = os.getenv("BOT_TOKEN")
 
     app = Application.builder().token(token).build()
