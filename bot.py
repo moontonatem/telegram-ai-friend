@@ -31,9 +31,9 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 def main():
-   app = Application.builder().token(
-    os.getenv("BOT_TOKEN")
-).build()
+    app = Application.builder().token(
+        os.getenv("BOT_TOKEN")
+    ).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("ela", ela))
