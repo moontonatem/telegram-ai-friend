@@ -110,14 +110,14 @@ def main():
 
     print("POLLING ONCESI")
 
-try:
-    app.run_polling(
-        drop_pending_updates=True,
-        close_loop=False
-    )
-except Exception as e:
-    print("POLLING HATASI:", repr(e))
-
+    try:
+        app.run_polling(
+            drop_pending_updates=True,
+            close_loop=False
+        )
+    except Exception as e:
+        print("POLLING HATASI:", repr(e))
+        
 if __name__ == "__main__":
     threading.Thread(target=run_web).start()
     main()
