@@ -119,5 +119,5 @@ def main():
         print("POLLING HATASI:", repr(e))
         
 if __name__ == "__main__":
-    threading.Thread(target=run_web).start()
+    print("TELEGRAM BOT BASLIYOR")
     main()
