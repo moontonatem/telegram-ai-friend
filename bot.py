@@ -1,3 +1,4 @@
+import os
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
@@ -30,7 +31,9 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 def main():
-    app = Application.builder().token("TOKEN_BURAYA").build()
+   app = Application.builder().token(
+    os.getenv("BOT_TOKEN")
+).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("ela", ela))
