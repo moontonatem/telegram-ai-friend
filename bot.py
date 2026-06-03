@@ -1,6 +1,6 @@
 import os
 import threading
-import asyncio
+import requests
 
 from flask import Flask
 from telegram import Update
@@ -9,32 +9,96 @@ from telegram.ext import (
     CommandHandler,
     MessageHandler,
     ContextTypes,
-    filters
+    filters,
 )
 
 print("SURUM TEST 2026")
 
-web_app = Flask(__name__)
+# --------------------
+# FLASK
+# --------------------
 
-@web_app.route("/")
+app_web = Flask(__name__)
+
+@app_web.route("/")
 def home():
     print("WEB ISTEGI GELDI")
-    return "Bot Aktif"
+    return "BOT AKTIF"
 
 def run_web():
-    port = int(os.environ.get("PORT", 10000))
+    port = int(os.getenv("PORT", 10000))
     print("FLASK BASLIYOR PORT:", port)
-    web_app.run(host="0.0.0.0", port=port)
+    app_web.run(host="0.0.0.0", port=port)
+
+# --------------------
+# AI
+# --------------------
+
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+def ask_ai(message):
+
+    api_key = os.getenv("OPENROUTER_API_KEY")
+
+    response = requests.post(
+        OPENROUTER_URL,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": "mistralai/mistral-7b-instruct:free",
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "Türkçe konuşan yardımcı bir asistansın."
+                },
+                {
+                    "role": "user",
+                    "content": message
+                }
+            ]
+        },
+        timeout=60
+    )
+
+    print("AI STATUS:", response.status_code)
+
+    data = response.json()
+
+    return data["choices"][0]["message"]["content"]
+
+# --------------------
+# TELEGRAM
+# --------------------
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print("/START CALISTI")
-    await update.message.reply_text("Bot çalışıyor ✅")
+    print("/start CALISTI")
+    await update.message.reply_text("Bot aktif.")
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print("MESAJ:", update.message.text)
-    await update.message.reply_text(
-        f"Yazdığın mesaj: {update.message.text}"
-    )
+
+    text = update.message.text
+
+    print("MESAJ:", text)
+
+    try:
+
+        cevap = ask_ai(text)
+
+        await update.message.reply_text(cevap)
+
+    except Exception as e:
+
+        print("HATA:", repr(e))
+
+        await update.message.reply_text(
+            f"Hata oluştu:\n{str(e)}"
+        )
+
+# --------------------
+# MAIN
+# --------------------
 
 def main():
 
@@ -42,23 +106,18 @@ def main():
 
     token = os.getenv("BOT_TOKEN")
 
-    print("TOKEN:", token[:15] + "...")
-
-    try:
-        print("APP OLUSTURULUYOR")
-
-        application = (
-            Application
-            .builder()
-            .token(token)
-            .build()
-        )
-
-        print("APP OLUSTU")
-
-    except Exception as e:
-        print("APP HATASI:", repr(e))
+    if not token:
+        print("BOT_TOKEN YOK")
         return
+
+    print("TOKEN VAR")
+
+    application = (
+        Application
+        .builder()
+        .token(token)
+        .build()
+    )
 
     application.add_handler(
         CommandHandler("start", start)
@@ -73,13 +132,14 @@ def main():
 
     print("POLLING BASLIYOR")
 
-    try:
-        application.run_polling(
-            drop_pending_updates=True
-        )
-    except Exception as e:
-        print("POLLING HATASI:", repr(e))
-        
+    application.run_polling(
+        drop_pending_updates=True
+    )
+
+# --------------------
+# START
+# --------------------
+
 if __name__ == "__main__":
 
     threading.Thread(
