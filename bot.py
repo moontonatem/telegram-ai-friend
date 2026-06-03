@@ -1,3 +1,4 @@
+import asyncio
 import os
 import threading
 from flask import Flask
@@ -30,22 +31,30 @@ def main():
 
     print("MAIN BASLADI")
 
-    token = os.getenv("BOT_TOKEN")
+token = os.getenv("BOT_TOKEN")
 
-    print("TOKEN VAR:", bool(token))
+print("TOKEN VAR:", bool(token))
 
-    application = Application.builder().token(token).build()
+application = Application.builder().token(token).build()
 
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, echo)
-    )
+application.add_handler(CommandHandler("start", start))
+application.add_handler(
+    MessageHandler(filters.TEXT & ~filters.COMMAND, echo)
+)
 
-    print("POLLING BASLIYOR")
+print("POLLING BASLIYOR")
 
-    application.run_polling(
-        drop_pending_updates=True
-    )
+application.run_polling(
+    drop_pending_updates=True
+)
+
+    import asyncio
+
+asyncio.set_event_loop(asyncio.new_event_loop())
+
+application.run_polling(
+    drop_pending_updates=True
+)
 
 if __name__ == "__main__":
     threading.Thread(target=run_web, daemon=True).start()
