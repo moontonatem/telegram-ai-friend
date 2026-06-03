@@ -42,20 +42,28 @@ def main():
 
     token = os.getenv("BOT_TOKEN")
 
-    print("TOKEN VAR:", bool(token))
+    print("TOKEN:", token[:15] + "...")
 
-    print("APP OLUSTURULUYOR")
+    try:
+        print("APP OLUSTURULUYOR")
 
-    application = Application.builder().token(token).build()
+        application = (
+            Application
+            .builder()
+            .token(token)
+            .build()
+        )
 
-    print("APP OLUSTU")
+        print("APP OLUSTU")
 
-    print("HANDLER 1")
+    except Exception as e:
+        print("APP HATASI:", repr(e))
+        return
+
     application.add_handler(
         CommandHandler("start", start)
     )
 
-    print("HANDLER 2")
     application.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,
@@ -65,14 +73,13 @@ def main():
 
     print("POLLING BASLIYOR")
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    application.run_polling(
-        drop_pending_updates=True,
-        close_loop=False
-    )
-
+    try:
+        application.run_polling(
+            drop_pending_updates=True
+        )
+    except Exception as e:
+        print("POLLING HATASI:", repr(e))
+        
 if __name__ == "__main__":
 
     threading.Thread(
