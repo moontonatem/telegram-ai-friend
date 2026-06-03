@@ -45,11 +45,15 @@ def main():
     print("TOKEN VAR:", bool(token))
 
     print("APP OLUSTURULUYOR")
+
     application = Application.builder().token(token).build()
+
     print("APP OLUSTU")
 
     print("HANDLER 1")
-    application.add_handler(CommandHandler("start", start))
+    application.add_handler(
+        CommandHandler("start", start)
+    )
 
     print("HANDLER 2")
     application.add_handler(
@@ -61,11 +65,16 @@ def main():
 
     print("POLLING BASLIYOR")
 
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
     application.run_polling(
-        drop_pending_updates=True
+        drop_pending_updates=True,
+        close_loop=False
     )
 
 if __name__ == "__main__":
+
     threading.Thread(
         target=run_web,
         daemon=True
