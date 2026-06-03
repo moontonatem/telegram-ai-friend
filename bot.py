@@ -1,3 +1,5 @@
+print("### SURUM 999 ###")
+
 import os
 import threading
 import requests
