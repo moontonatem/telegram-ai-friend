@@ -108,7 +108,7 @@ def main():
 
     print("POLLING BASLIYOR")
 
-    app.run_polling(app.run_polling(
+    app.run_polling(
     drop_pending_updates=True,
     close_loop=False
 )
