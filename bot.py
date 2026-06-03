@@ -106,12 +106,15 @@ def main():
     app.add_handler(CommandHandler("emre", emre))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chat))
 
-    print("POLLING BASLIYOR")
+    print("POLLING ONCESI")
 
+try:
     app.run_polling(
-    drop_pending_updates=True,
-    close_loop=False
-)
+        drop_pending_updates=True,
+        close_loop=False
+    )
+except Exception as e:
+    print("POLLING HATASI:", repr(e))
 
 if __name__ == "__main__":
     threading.Thread(target=run_web).start()
