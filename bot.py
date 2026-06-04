@@ -43,7 +43,7 @@ def webhook():
                 "Content-Type": "application/json"
             },
             json={
-                "model": "google/gemma-3-12b-it:free",
+                "model": "openai/gpt-oss-120b",
                 "messages": [
                     {
                         "role": "system",
