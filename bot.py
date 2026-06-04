@@ -12,36 +12,33 @@ from telegram.ext import (
     filters,
 )
 
-print("SURUM TEST 2026")
+print("SURUM TEMIZ 2026")
 
 # --------------------
 # FLASK
 # --------------------
 
-app_web = Flask(__name__)
+web = Flask(__name__)
 
-@app_web.route("/")
+@web.route("/")
 def home():
-    print("WEB ISTEGI GELDI")
-    return "BOT AKTIF"
+    return "BOT ONLINE"
 
 def run_web():
-    port = int(os.getenv("PORT", 10000))
-    print("FLASK BASLIYOR PORT:", port)
-    app_web.run(host="0.0.0.0", port=port)
+    port = int(os.environ.get("PORT", 10000))
+    print("FLASK PORT:", port)
+    web.run(host="0.0.0.0", port=port)
 
 # --------------------
-# AI
+# OPENROUTER
 # --------------------
-
-OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 def ask_ai(message):
 
     api_key = os.getenv("OPENROUTER_API_KEY")
 
     response = requests.post(
-        OPENROUTER_URL,
+        "https://openrouter.ai/api/v1/chat/completions",
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
@@ -62,7 +59,7 @@ def ask_ai(message):
         timeout=60
     )
 
-    print("AI STATUS:", response.status_code)
+    response.raise_for_status()
 
     data = response.json()
 
@@ -73,20 +70,19 @@ def ask_ai(message):
 # --------------------
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print("/start CALISTI")
     await update.message.reply_text("Bot aktif.")
 
-async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    text = update.message.text
-
-    print("MESAJ:", text)
+async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
 
-        cevap = ask_ai(text)
+        text = update.message.text
 
-        await update.message.reply_text(cevap)
+        print("MESAJ:", text)
+
+        answer = ask_ai(text)
+
+        await update.message.reply_text(answer)
 
     except Exception as e:
 
@@ -107,33 +103,29 @@ def main():
     token = os.getenv("BOT_TOKEN")
 
     if not token:
-        print("BOT_TOKEN YOK")
+        print("BOT_TOKEN BULUNAMADI")
         return
 
-    print("TOKEN VAR")
+    print("TOKEN OK")
 
-    application = (
-        Application
-        .builder()
-        .token(token)
-        .build()
-    )
+    app = Application.builder().token(token).build()
 
-    application.add_handler(
+    app.add_handler(
         CommandHandler("start", start)
     )
 
-    application.add_handler(
+    app.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,
-            echo
+            chat
         )
     )
 
-    print("POLLING BASLIYOR")
+    print("POLLING BASLADI")
 
-    application.run_polling(
-        drop_pending_updates=True
+    app.run_polling(
+        drop_pending_updates=True,
+        allowed_updates=Update.ALL_TYPES
     )
 
 # --------------------
