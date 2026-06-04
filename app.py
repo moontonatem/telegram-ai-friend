@@ -13,7 +13,7 @@ if not TELEGRAM_TOKEN or not OPENROUTER_API_KEY or not ALLOWED_CHAT_ID_ENV:
 
 ALLOWED_CHAT_ID = int(ALLOWED_CHAT_ID_ENV)
 # Kesin çalışan ücretsiz model:
-MODEL_NAME = "google/gemini-2.0-flash-lite-preview"
+MODEL_NAME = "google/gemini-2.0-flash-lite-preview-02-05:free"
 
 session = requests.Session()
 session.headers.update({"User-Agent": "ElaTelegramBot/1.0"})
