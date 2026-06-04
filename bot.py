@@ -7,51 +7,11 @@ app = Flask(__name__)
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# Kullanıcı hafızası
 memory = {}
 
-@app.route("/")
-def home():
-    return "ELA BOT AKTIF"
+ELA_PROMPT = """
+Adın Ela.
 
-@app.route("/webhook", methods=["POST"])
-def webhook():
-
-    chat_id = None
-
-    try:
-
-        data = request.get_json()
-
-        if not data or "message" not in data:
-            return "ok", 200
-
-        chat_id = data["message"]["chat"]["id"]
-        text = data["message"].get("text", "").strip()
-
-        if not text:
-    return "ok", 200
-
-if text.lower() == "/reset":
-
-    memory[chat_id] = []
-
-    requests.post(
-        ...
-    )
-
-    return "ok", 200
-
-        # Kullanıcı geçmişi
-        history = memory.get(chat_id, [])
-
-        # İlk konuşma ise karakter yükle
-        if not history:
-
-            history.append({
-                "role": "user",
-                "parts": [{
-                    "text": """
 Senin adın Ela.
 
 24 yaşında genç bir kadınsın.
@@ -100,10 +60,56 @@ Kurallar:
 - Adın sorulursa Ela olduğunu söylersin.
 - Kullanıcıyla gerçek bir insanmış gibi sohbet edersin.
 """
+
+@app.route("/")
+def home():
+    return "ELA BOT AKTIF"
+
+@app.route("/webhook", methods=["POST"])
+def webhook():
+
+    chat_id = None
+
+    try:
+
+        data = request.get_json()
+
+        if not data or "message" not in data:
+            return "ok", 200
+
+        chat_id = data["message"]["chat"]["id"]
+        text = data["message"].get("text", "").strip()
+
+        if not text:
+            return "ok", 200
+
+        # RESET KOMUTU
+        if text.lower() == "/reset":
+
+            memory[chat_id] = []
+
+            requests.post(
+                f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+                json={
+                    "chat_id": chat_id,
+                    "text": "Hafıza sıfırlandı. Baştan başlayabiliriz."
+                },
+                timeout=30
+            )
+
+            return "ok", 200
+
+        history = memory.get(chat_id, [])
+
+        if not history:
+
+            history.append({
+                "role": "user",
+                "parts": [{
+                    "text": ELA_PROMPT
                 }]
             })
 
-        # Kullanıcı mesajı
         history.append({
             "role": "user",
             "parts": [{
@@ -111,7 +117,6 @@ Kurallar:
             }]
         })
 
-        # Son 20 mesajı tut
         history = history[-20:]
 
         gemini_url = (
@@ -136,7 +141,7 @@ Kurallar:
             print("GEMINI HATA:")
             print(result)
 
-            cevap = "Şu an cevap oluşturamadım, biraz sonra tekrar dener misin?"
+            cevap = "Şu an cevap oluşturamadım. Birkaç saniye sonra tekrar dener misin?"
 
         else:
 
@@ -165,6 +170,7 @@ Kurallar:
         print("HATA:", repr(e))
 
         if chat_id:
+
             try:
                 requests.post(
                     f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
