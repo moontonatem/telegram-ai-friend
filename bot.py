@@ -14,15 +14,24 @@ def home():
 @app.route("/webhook", methods=["POST"])
 def webhook():
 
+    chat_id = None
+
     try:
 
         data = request.get_json()
+
+        if not data:
+            return "ok", 200
 
         if "message" not in data:
             return "ok", 200
 
         chat_id = data["message"]["chat"]["id"]
         text = data["message"].get("text", "")
+
+        print("=" * 50)
+        print("GELEN MESAJ:", text)
+        print("=" * 50)
 
         if not text:
             return "ok", 200
@@ -49,7 +58,26 @@ def webhook():
             timeout=60
         )
 
-        cevap = ai.json()["choices"][0]["message"]["content"]
+        print("OPENROUTER STATUS:", ai.status_code)
+        print("OPENROUTER CEVAP:")
+        print(ai.text)
+
+        data_ai = ai.json()
+
+        if "choices" not in data_ai:
+
+            requests.post(
+                f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+                json={
+                    "chat_id": chat_id,
+                    "text": f"OpenRouter Hatası:\n{ai.text[:300]}"
+                },
+                timeout=30
+            )
+
+            return "ok", 200
+
+        cevap = data_ai["choices"][0]["message"]["content"]
 
         requests.post(
             f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
@@ -62,18 +90,22 @@ def webhook():
 
     except Exception as e:
 
-        print("HATA:", repr(e))
+        print("GENEL HATA:")
+        print(repr(e))
 
-        try:
-            requests.post(
-                f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-                json={
-                    "chat_id": chat_id,
-                    "text": f"Hata: {str(e)}"
-                }
-            )
-        except:
-            pass
+        if chat_id:
+
+            try:
+                requests.post(
+                    f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+                    json={
+                        "chat_id": chat_id,
+                        "text": f"Hata:\n{str(e)}"
+                    },
+                    timeout=30
+                )
+            except:
+                pass
 
     return "ok", 200
 
@@ -82,6 +114,7 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
 
     print("AI BOT BASLADI")
+    print("PORT:", port)
 
     app.run(
         host="0.0.0.0",
