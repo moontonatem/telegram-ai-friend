@@ -10,8 +10,6 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 memory = {}
 
 ELA_PROMPT = """
-Adın Ela.
-
 Senin adın Ela.
 
 24 yaşında genç bir kadınsın.
@@ -59,6 +57,7 @@ Kurallar:
 - Türkçe konuşursun.
 - Adın sorulursa Ela olduğunu söylersin.
 - Kullanıcıyla gerçek bir insanmış gibi sohbet edersin.
+
 """
 
 @app.route("/")
@@ -83,10 +82,10 @@ def webhook():
         text = data["message"].get("text", "").strip()
 
         print("MESAJ:", text)
+
         if not text:
             return "ok", 200
 
-        # RESET KOMUTU
         if text.lower() == "/reset":
 
             memory[chat_id] = []
@@ -95,7 +94,7 @@ def webhook():
                 f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
                 json={
                     "chat_id": chat_id,
-                    "text": "Hafıza sıfırlandı. Baştan başlayabiliriz."
+                    "text": "Hafıza sıfırlandı."
                 },
                 timeout=30
             )
@@ -104,12 +103,13 @@ def webhook():
 
         history = memory.get(chat_id, [])
 
-       
         history.append({
             "role": "user",
-            "parts": [{
-                "text": text
-            }]
+            "parts": [
+                {
+                    "text": text
+                }
+            ]
         })
 
         history = history[-20:]
@@ -120,29 +120,35 @@ def webhook():
         )
 
         response = requests.post(
-    gemini_url,
-    json={
-        "system_instruction": {
-            "parts": [
-                {
-                    "text": ELA_PROMPT
-                }
-            ]
-        },
-        "contents": history
-    },
-    timeout=60
-)
+            gemini_url,
+            json={
+                "system_instruction": {
+                    "parts": [
+                        {
+                            "text": ELA_PROMPT
+                        }
+                    ]
+                },
+                "contents": history
+            },
+            timeout=60
+        )
 
         print("GEMINI STATUS:", response.status_code)
+        print("GEMINI RESPONSE:")
+        print(response.text)
 
         result = response.json()
+
         if "candidates" not in result:
 
             print("GEMINI HATA:")
             print(result)
 
-            cevap = f"Gemini Hatası:\n{str(result)[:350]}"
+            if response.status_code == 429:
+                cevap = "Gemini kota sınırına ulaştı."
+            else:
+                cevap = f"Gemini Hatası:\n{str(result)[:350]}"
 
         else:
 
@@ -150,9 +156,11 @@ def webhook():
 
             history.append({
                 "role": "model",
-                "parts": [{
-                    "text": cevap
-                }]
+                "parts": [
+                    {
+                        "text": cevap
+                    }
+                ]
             })
 
             memory[chat_id] = history[-20:]
