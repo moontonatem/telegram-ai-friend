@@ -141,7 +141,7 @@ def webhook():
             print("GEMINI HATA:")
             print(result)
 
-            cevap = "Şu an cevap oluşturamadım. Birkaç saniye sonra tekrar dener misin?"
+            cevap = f"Gemini Hatası:\n{str(result)[:350]}"
 
         else:
 
