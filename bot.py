@@ -75,7 +75,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
-
         text = update.message.text
 
         print("MESAJ:", text)
@@ -109,15 +108,15 @@ def main():
     print("TOKEN OK")
 
     try:
-    print("APP OLUSTURULUYOR")
+        print("APP OLUSTURULUYOR")
 
-    app = Application.builder().token(token).build()
+        app = Application.builder().token(token).build()
 
-    print("APP OLUSTU")
+        print("APP OLUSTU")
 
-except Exception as e:
-    print("APP HATASI:", repr(e))
-    return
+    except Exception as e:
+        print("APP HATASI:", repr(e))
+        return
 
     app.add_handler(
         CommandHandler("start", start)
@@ -133,8 +132,7 @@ except Exception as e:
     print("POLLING BASLADI")
 
     app.run_polling(
-        drop_pending_updates=True,
-        allowed_updates=Update.ALL_TYPES
+        drop_pending_updates=True
     )
 
 # --------------------
