@@ -7,6 +7,9 @@ app = Flask(__name__)
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
+# Basit hafıza
+memory = {}
+
 @app.route("/")
 def home():
     return "BOT ONLINE"
@@ -20,7 +23,7 @@ def webhook():
 
         data = request.get_json()
 
-        if "message" not in data:
+        if not data or "message" not in data:
             return "ok", 200
 
         chat_id = data["message"]["chat"]["id"]
@@ -28,6 +31,17 @@ def webhook():
 
         if not text:
             return "ok", 200
+
+        # Kullanıcı geçmişini al
+        history = memory.get(chat_id, [])
+
+        history.append({
+            "role": "user",
+            "parts": [{"text": text}]
+        })
+
+        # Son 10 mesajı tut
+        history = history[-10:]
 
         gemini_url = (
             "https://generativelanguage.googleapis.com/v1beta/models/"
@@ -37,25 +51,33 @@ def webhook():
         response = requests.post(
             gemini_url,
             json={
-                "contents": [
-                    {
-                        "parts": [
-                            {
-                                "text": text
-                            }
-                        ]
-                    }
-                ]
+                "contents": history
             },
             timeout=60
         )
 
         print("GEMINI STATUS:", response.status_code)
-        print(response.text)
 
         result = response.json()
 
-        cevap = result["candidates"][0]["content"]["parts"][0]["text"]
+        # Hata kontrolü
+        if "candidates" not in result:
+
+            print("GEMINI HATA:")
+            print(result)
+
+            cevap = "Şu anda cevap oluşturamadım. Birkaç saniye sonra tekrar deneyin."
+
+        else:
+
+            cevap = result["candidates"][0]["content"]["parts"][0]["text"]
+
+            history.append({
+                "role": "model",
+                "parts": [{"text": cevap}]
+            })
+
+            memory[chat_id] = history[-10:]
 
         requests.post(
             f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
@@ -89,7 +111,7 @@ if __name__ == "__main__":
 
     port = int(os.environ.get("PORT", 10000))
 
-    print("GEMINI BOT BASLADI")
+    print("GEMINI HAFIZALI BOT BASLADI")
 
     app.run(
         host="0.0.0.0",
