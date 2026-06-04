@@ -43,7 +43,7 @@ def webhook():
                 "Content-Type": "application/json"
             },
             json={
-                "model": "mistralai/mistral-7b-instruct:free",
+                "model": "openai/gpt-oss-20b:free",
                 "messages": [
                     {
                         "role": "system",
