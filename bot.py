@@ -101,15 +101,7 @@ def webhook():
 
         history = memory.get(chat_id, [])
 
-        if not history:
-
-            history.append({
-                "role": "user",
-                "parts": [{
-                    "text": ELA_PROMPT
-                }]
-            })
-
+       
         history.append({
             "role": "user",
             "parts": [{
@@ -125,12 +117,19 @@ def webhook():
         )
 
         response = requests.post(
-            gemini_url,
-            json={
-                "contents": history
-            },
-            timeout=60
-        )
+    gemini_url,
+    json={
+        "system_instruction": {
+            "parts": [
+                {
+                    "text": ELA_PROMPT
+                }
+            ]
+        },
+        "contents": history
+    },
+    timeout=60
+)
 
         print("GEMINI STATUS:", response.status_code)
 
