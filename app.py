@@ -12,7 +12,7 @@ if not TELEGRAM_TOKEN or not OPENROUTER_API_KEY or not ALLOWED_CHAT_ID_ENV:
     raise RuntimeError("KRİTİK HATA: Çevre değişkenleri eksik!")
 
 ALLOWED_CHAT_ID = int(ALLOWED_CHAT_ID_ENV)
-MODEL_NAME = os.environ.get("MODEL_NAME", "google/gemini-flash-1.5-free")
+MODEL_NAME = os.environ.get("MODEL_NAME", "meta-llama/llama-3-8b-instruct:free")
 
 session = requests.Session()
 session.headers.update({"User-Agent": "ElaTelegramBot/1.0"})
