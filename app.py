@@ -101,9 +101,22 @@ def webhook():
     bot_response = ""
 
     try:
-        response = session.post(openrouter_url, json=payload, headers=headers, timeout=60)
-        response.raise_for_status()
-        response_json = response.json()
+    print(f"DEBUG MODEL: {MODEL_NAME}")
+
+    response = session.post(
+        openrouter_url,
+        json=payload,
+        headers=headers,
+        timeout=60
+    )
+
+    if response.status_code != 200:
+        print(f"DEBUG STATUS: {response.status_code}")
+        print(f"DEBUG RESPONSE: {response.text}")
+
+    response.raise_for_status()
+
+    response_json = response.json()
         
         choices = response_json.get("choices", [])
         if choices:
