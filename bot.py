@@ -132,6 +132,8 @@ def webhook():
 )
 
         print("GEMINI STATUS:", response.status_code)
+        print("GEMINI RESPONSE:")
+print(response.text)
 
         result = response.json()
 
