@@ -1,149 +1,89 @@
 import os
-import threading
 import requests
+from flask import Flask, request
 
-from flask import Flask
-from telegram import Update
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    MessageHandler,
-    ContextTypes,
-    filters,
-)
+app = Flask(__name__)
 
-print("SURUM TEMIZ 2026")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
-# --------------------
-# FLASK
-# --------------------
+TELEGRAM_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
-web = Flask(__name__)
 
-@web.route("/")
+@app.route("/")
 def home():
     return "BOT ONLINE"
 
-def run_web():
-    port = int(os.environ.get("PORT", 10000))
-    print("FLASK PORT:", port)
-    web.run(host="0.0.0.0", port=port)
 
-# --------------------
-# OPENROUTER
-# --------------------
-
-def ask_ai(message):
-
-    api_key = os.getenv("OPENROUTER_API_KEY")
-
-    response = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        },
-        json={
-            "model": "mistralai/mistral-7b-instruct:free",
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "Türkçe konuşan yardımcı bir asistansın."
-                },
-                {
-                    "role": "user",
-                    "content": message
-                }
-            ]
-        },
-        timeout=60
-    )
-
-    response.raise_for_status()
-
-    data = response.json()
-
-    return data["choices"][0]["message"]["content"]
-
-# --------------------
-# TELEGRAM
-# --------------------
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Bot aktif.")
-
-async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
+@app.route("/webhook", methods=["POST"])
+def webhook():
 
     try:
-        text = update.message.text
+        data = request.get_json()
+
+        print("GELEN:", data)
+
+        if not data:
+            return "ok"
+
+        if "message" not in data:
+            return "ok"
+
+        chat_id = data["message"]["chat"]["id"]
+        text = data["message"].get("text", "")
+
+        if not text:
+            return "ok"
 
         print("MESAJ:", text)
 
-        answer = ask_ai(text)
+        ai_response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "mistralai/mistral-7b-instruct:free",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "Türkçe konuşan yardımcı bir asistansın."
+                    },
+                    {
+                        "role": "user",
+                        "content": text
+                    }
+                ]
+            },
+            timeout=60
+        )
 
-        await update.message.reply_text(answer)
+        answer = ai_response.json()["choices"][0]["message"]["content"]
+
+        requests.post(
+            f"{TELEGRAM_URL}/sendMessage",
+            json={
+                "chat_id": chat_id,
+                "text": answer
+            },
+            timeout=30
+        )
 
     except Exception as e:
-
         print("HATA:", repr(e))
 
-        await update.message.reply_text(
-            f"Hata oluştu:\n{str(e)}"
-        )
+    return "ok"
 
-# --------------------
-# MAIN
-# --------------------
-
-def main():
-
-    print("MAIN BASLADI")
-
-    token = os.getenv("BOT_TOKEN")
-
-    if not token:
-        print("BOT_TOKEN BULUNAMADI")
-        return
-
-    print("TOKEN OK")
-
-    try:
-        print("APP OLUSTURULUYOR")
-
-        app = Application.builder().token(token).build()
-
-        print("APP OLUSTU")
-
-    except Exception as e:
-        print("APP HATASI:", repr(e))
-        return
-
-    app.add_handler(
-        CommandHandler("start", start)
-    )
-
-    app.add_handler(
-        MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            chat
-        )
-    )
-
-    print("POLLING BASLADI")
-
-    app.run_polling(
-        drop_pending_updates=True
-    )
-
-# --------------------
-# START
-# --------------------
 
 if __name__ == "__main__":
 
-    threading.Thread(
-        target=run_web,
-        daemon=True
-    ).start()
+    port = int(os.environ.get("PORT", 10000))
 
-    main()
+    print("WEBHOOK SURUMU BASLADI")
+    print("PORT:", port)
+
+    app.run(
+        host="0.0.0.0",
+        port=port
+    )
