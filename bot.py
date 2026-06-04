@@ -68,6 +68,8 @@ def home():
 @app.route("/webhook", methods=["POST"])
 def webhook():
 
+    print("WEBHOOK CALISTI")
+
     chat_id = None
 
     try:
@@ -80,6 +82,7 @@ def webhook():
         chat_id = data["message"]["chat"]["id"]
         text = data["message"].get("text", "").strip()
 
+        print("MESAJ:", text)
         if not text:
             return "ok", 200
 
@@ -132,11 +135,8 @@ def webhook():
 )
 
         print("GEMINI STATUS:", response.status_code)
-        print("GEMINI RESPONSE:")
-        print(response.text)
 
         result = response.json()
-
         if "candidates" not in result:
 
             print("GEMINI HATA:")
