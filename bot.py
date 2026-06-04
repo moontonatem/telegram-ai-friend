@@ -108,7 +108,16 @@ def main():
 
     print("TOKEN OK")
 
+    try:
+    print("APP OLUSTURULUYOR")
+
     app = Application.builder().token(token).build()
+
+    print("APP OLUSTU")
+
+except Exception as e:
+    print("APP HATASI:", repr(e))
+    return
 
     app.add_handler(
         CommandHandler("start", start)
