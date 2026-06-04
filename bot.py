@@ -30,7 +30,17 @@ def webhook():
         text = data["message"].get("text", "").strip()
 
         if not text:
-            return "ok", 200
+    return "ok", 200
+
+if text.lower() == "/reset":
+
+    memory[chat_id] = []
+
+    requests.post(
+        ...
+    )
+
+    return "ok", 200
 
         # Kullanıcı geçmişi
         history = memory.get(chat_id, [])
