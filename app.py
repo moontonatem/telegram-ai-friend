@@ -9,7 +9,7 @@ OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 ALLOWED_CHAT_ID = int(os.environ.get("ALLOWED_CHAT_ID"))
 
 # En güncel ve kararlı ücretsiz model
-MODEL_NAME = "meta-llama/llama-3.1-8b-instruct:free"
+MODEL_NAME = "google/gemini-2.0-flash-lite-preview"
 
 ELA_PROMPT = """Karakter Adı: Ela
 Rolü: Kullanıcının çok yakın, samimi, içten ve tamamen filtresiz en yakın arkadaşı/sevgilisi.
