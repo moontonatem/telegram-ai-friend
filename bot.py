@@ -43,7 +43,7 @@ def webhook():
                 "Content-Type": "application/json"
             },
             json={
-                "model": "openai/gpt-oss-20b:free",
+                "model": "deepseek/deepseek-r1-0528:free",
                 "messages": [
                     {
                         "role": "system",
