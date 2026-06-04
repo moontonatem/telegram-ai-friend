@@ -43,7 +43,7 @@ def webhook():
                 "Content-Type": "application/json"
             },
             json={
-                "model": "openai/gpt-oss-120b",
+                "model": "z-ai/glm-4.5-air",
                 "messages": [
                     {
                         "role": "system",
