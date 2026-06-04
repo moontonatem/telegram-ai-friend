@@ -43,7 +43,7 @@ def webhook():
                 "Content-Type": "application/json"
             },
             json={
-                "model": "deepseek/deepseek-r1-0528:free",
+                "model": "meta-llama/llama-3.3-8b-instruct:free",
                 "messages": [
                     {
                         "role": "system",
